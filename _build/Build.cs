@@ -803,7 +803,7 @@ internal class Build : NukeBuild
                 Git("commit --allow-empty -m \"Commit latest generated files\""); // We allow an empty commit in case the last change did not affect the site.
                 Git("status");
                 Git("fetch origin");
-                Git($"pull origin {GitRepository.Branch}");
+                Git($"merge origin {GitRepository.Branch}");
                 Git($"push --set-upstream origin {GitRepository.Branch}");
             }
         });
