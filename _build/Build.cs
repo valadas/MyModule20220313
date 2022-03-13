@@ -439,21 +439,21 @@ internal class Build : NukeBuild
         .DependsOn(UpdateTokens)
         .Executes(() =>
         {
-            // Get the milestone
-            var milestone = gitHubClient.Issue.Milestone.GetAllForRepository(
-                GitRepository.GetGitHubOwner(),
-                GitRepository.GetGitHubName()).Result
-                .Where(m => m.Title == GitVersion.MajorMinorPatch).FirstOrDefault();
-            Serilog.Log.Information(SerializationTasks.JsonSerialize(milestone));
-            if (milestone == null)
-            {
-                Serilog.Log.Warning("Milestone not found for this version");
-                releaseNotes = "No release notes for this version.";
-                return;
-            }
-
             try
             {
+                // Get the milestone
+                var milestone = gitHubClient.Issue.Milestone.GetAllForRepository(
+                    GitRepository.GetGitHubOwner(),
+                    GitRepository.GetGitHubName()).Result
+                    .Where(m => m.Title == GitVersion.MajorMinorPatch).FirstOrDefault();
+                Serilog.Log.Information(SerializationTasks.JsonSerialize(milestone));
+                if (milestone == null)
+                {
+                    Serilog.Log.Warning("Milestone not found for this version");
+                    releaseNotes = "No release notes for this version.";
+                    return;
+                }
+
                 // Get the PRs
                 var prRequest = new PullRequestRequest()
                 {
