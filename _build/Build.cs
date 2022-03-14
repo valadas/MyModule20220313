@@ -17,6 +17,7 @@ using Nuke.Common.Tools.NSwag;
 using Nuke.Common.Tools.ReportGenerator;
 using Nuke.Common.Tools.VSTest;
 using Nuke.Common.Tools.Xunit;
+using Nuke.Common.Utilities;
 using Nuke.Common.Utilities.Collections;
 using Octokit;
 using System;
@@ -106,7 +107,6 @@ internal class Build : NukeBuild
 
     string releaseNotes = "";
     GitHubClient gitHubClient;
-    MilestonesClient milestonesClient;
     Release release;
 
     Target UpdateTokens => _ => _
@@ -430,9 +430,6 @@ internal class Build : NukeBuild
                 gitHubClient = new GitHubClient(new ProductHeaderValue("Nuke"));
                 var tokenAuth = new Credentials(GitHubToken);
                 gitHubClient.Credentials = tokenAuth;
-                var connection = new Connection(new ProductHeaderValue("Nuke"));
-                var apiConnection = new ApiConnection(connection);
-                milestonesClient = new MilestonesClient(apiConnection);
             }
         });
 
@@ -446,7 +443,8 @@ internal class Build : NukeBuild
             try
             {
                 // Get the milestone
-                var allMilestones = Task.Run(() => milestonesClient.GetAllForRepository(GitRepository.GetGitHubOwner(), GitRepository.GetGitHubName())).Result;
+                var allMilestones = Task.Run(() => gitHubClient.Issue.Milestone.GetAllForRepository(
+                    GitRepository.GetGitHubOwner(), GitRepository.GetGitHubName())).Result;
                 Serilog.Log.Information(SerializationTasks.JsonSerialize(allMilestones));
                 if (allMilestones == null)
                 {
@@ -509,7 +507,9 @@ internal class Build : NukeBuild
             }
             catch (Exception ex)
             {
+                var unwrapped = ex.Unwrap();
                 Serilog.Log.Error(ex, "Something went wrong with the github api call.");
+                Serilog.Log.Error(unwrapped, "Unwrapped exception");
                 throw;
             }
         });
