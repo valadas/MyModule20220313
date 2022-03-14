@@ -439,21 +439,21 @@ internal class Build : NukeBuild
         .DependsOn(UpdateTokens)
         .Executes(() =>
         {
-            // Get the milestone
-            var milestone = gitHubClient.Issue.Milestone.GetAllForRepository(
-                GitRepository.GetGitHubOwner(),
-                GitRepository.GetGitHubName()).Result
-                .Where(m => m.Title == GitVersion.MajorMinorPatch).FirstOrDefault();
-            Serilog.Log.Information(SerializationTasks.JsonSerialize(milestone));
-            if (milestone == null)
-            {
-                Serilog.Log.Warning("Milestone not found for this version");
-                releaseNotes = "No release notes for this version.";
-                return;
-            }
-
             try
             {
+                // Get the milestone
+                var milestone = gitHubClient.Issue.Milestone.GetAllForRepository(
+                    GitRepository.GetGitHubOwner(),
+                    GitRepository.GetGitHubName()).Result
+                    .Where(m => m.Title == GitVersion.MajorMinorPatch).FirstOrDefault();
+                Serilog.Log.Information(SerializationTasks.JsonSerialize(milestone));
+                if (milestone == null)
+                {
+                    Serilog.Log.Warning("Milestone not found for this version");
+                    releaseNotes = "No release notes for this version.";
+                    return;
+                }
+
                 // Get the PRs
                 var prRequest = new PullRequestRequest()
                 {
@@ -803,7 +803,7 @@ internal class Build : NukeBuild
                 Git("commit --allow-empty -m \"Commit latest generated files\""); // We allow an empty commit in case the last change did not affect the site.
                 Git("status");
                 Git("fetch origin");
-                Git($"pull origin {GitRepository.Branch}");
+                Git($"merge origin/{GitRepository.Branch}");
                 Git($"push --set-upstream origin {GitRepository.Branch}");
             }
         });
