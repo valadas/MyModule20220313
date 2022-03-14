@@ -106,6 +106,7 @@ internal class Build : NukeBuild
 
     string releaseNotes = "";
     GitHubClient gitHubClient;
+    MilestonesClient milestonesClient;
     Release release;
 
     Target UpdateTokens => _ => _
@@ -429,6 +430,9 @@ internal class Build : NukeBuild
                 gitHubClient = new GitHubClient(new ProductHeaderValue("Nuke"));
                 var tokenAuth = new Credentials(GitHubToken);
                 gitHubClient.Credentials = tokenAuth;
+                var connection = new Connection(new ProductHeaderValue("Nuke"));
+                var apiConnection = new ApiConnection(connection);
+                milestonesClient = new MilestonesClient(apiConnection);
             }
         });
 
@@ -442,9 +446,7 @@ internal class Build : NukeBuild
             try
             {
                 // Get the milestone
-                var allMilestones = Task.Run(() => gitHubClient.Issue.Milestone.GetAllForRepository(
-                    GitRepository.GetGitHubOwner(),
-                    GitRepository.GetGitHubName())).Result;
+                var allMilestones = Task.Run(() => milestonesClient.GetAllForRepository(GitRepository.GetGitHubOwner(), GitRepository.GetGitHubName())).Result;
                 Serilog.Log.Information(SerializationTasks.JsonSerialize(allMilestones));
                 if (allMilestones == null)
                 {
